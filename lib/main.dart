@@ -20,7 +20,7 @@ class StrayCameraApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Stray Camera',
+      title: 'Stray Tufting Camera',
       theme: ThemeData.dark(),
       home: const CameraHomeScreen(),
     );
@@ -34,7 +34,19 @@ class CameraHomeScreen extends StatefulWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stray Camera - Proceso'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/logo.png',
+              height: 32,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.camera),
+            ),
+            const SizedBox(width: 10),
+            const Text('Stray Tufting Camera'),
+          ],
+        ),
         centerTitle: true,
       ),
       body: _cameras.isEmpty
@@ -136,3 +148,64 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
           bottom: 30,
           left: 0,
           right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              FloatingActionButton(
+                heroTag: 'photo_btn',
+                backgroundColor: Colors.white,
+                onPressed: () async {
+                  try {
+                    final image = await controller!.takePicture();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Foto guardada en: ${image.path}')),
+                    );
+                  } catch (e) {
+                    debugPrint('Error al capturar foto: $e');
+                  }
+                },
+                child: const Icon(Icons.camera_alt, color: Colors.black),
+              ),
+
+              FloatingActionButton(
+                heroTag: 'video_btn',
+                backgroundColor: isRecording ? Colors.red : Colors.redAccent,
+                onPressed: () async {
+                  if (isRecording) {
+                    final video = await controller!.stopVideoRecording();
+                    setState(() => isRecording = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Video guardado en: ${video.path}')),
+                    );
+                  } else {
+                    await controller!.startVideoRecording();
+                    setState(() => isRecording = true);
+                  }
+                },
+                child: Icon(isRecording ? Icons.stop : Icons.videocam, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
+      ..strokeWidth = 1.0;
+
+    canvas.drawLine(Offset(size.width / 3, 0), Offset(size.width / 3, size.height), paint);
+    canvas.drawLine(Offset(2 * size.width / 3, 0), Offset(2 * size.width / 3, size.height), paint);
+
+    canvas.drawLine(Offset(0, size.height / 3), Offset(size.width, size.height / 3), paint);
+    canvas.drawLine(Offset(0, 2 * size.height / 3), Offset(size.width, 2 * size.height / 3), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
